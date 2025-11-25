@@ -1,45 +1,261 @@
-# flightportal
-Project for displaying the details of planes overhead on an Adafruit MatrixPortal and LED matrix
+# Flight Portal ✈️
 
-(video sped up to make the file fit, the speeds and delays are configurable anyway)
+Real-time flight display system for Adafruit MatrixPortal with web-based configuration interface.
 
-https://user-images.githubusercontent.com/103124527/206902629-1f31bd41-d8a8-415e-a35a-625efb20b3d6.MOV
+![Flight Portal Demo](https://user-images.githubusercontent.com/103124527/206902629-1f31bd41-d8a8-415e-a35a-625efb20b3d6.MOV)
+*(video sped up - speeds and delays are fully configurable)*
 
-Uses an Adafruit MatrixPortal and a 64x32 LED/RGB Matrix (P4), and some fairly hacked-together FlightRadar24 API-style scraping to display the details of flights passing overhead. That code being unoffical, it may break at any time!
+## 🎯 What's New in v2
 
-To make one you will need:
+The Flight Portal has been completely restructured with powerful new features:
 
-1. A MatrixPortal (https://www.adafruit.com/product/4745)
-2. A P4, 64x32 RGB matrix panel (I get mine from Aliexpress)
-3. The case I designed (https://www.thingiverse.com/thing:5701517)
-4. An adafruit acrylic diffuser (https://www.adafruit.com/product/4749) - available various places
-5. 6 M3 screws (sorry, said M5 before but was looking at the wrong ones, my bad. Think mine are 8mm long, little bit more would be OK, shorter probably a problem)
-6. Optional: Uglu dashes to stick the diffuser on, the case holds mine on pretty well though (https://www.protapes.com/products/uglu-600-dashes-sheets)
+- **🎨 Dynamic Layouts** - Switch between different display layouts without re-uploading code
+- **🌐 Web Interface** - Modern CRUD interface for managing all settings
+- **📊 Multiple Layout Templates** - Classic, Detailed, Minimal, and Tracking layouts included
+- **📝 Flexible Field Mapping** - Display any combination of API fields (altitude, speed, heading, etc.)
+- **⚙️ Remote Configuration** - Device polls web server for settings updates
+- **🎬 Adjustable Timing** - Fine-tune animation speeds and delays via web UI
 
-Prep the portal as detailed here (https://learn.adafruit.com/adafruit-matrixportal-m4/prep-the-matrixportal), put the code and secrets files on, put your wifi details and the geo box you want to search in the secrets file, and you should be good to go!
+## 📋 Quick Start
 
-If you'd like to change the layout, colours or the flight info displayed, all that is pretty configurable, have a look at code.py. Hopefully the comments are fairly self explanatory if you're happy hacking around with python.
+### Option 1: New Setup (v2 with Web Interface)
 
-The libaries it needs are I think all part of the recommended prep above, but for info they are:
+1. **Install Web Interface**
+   ```bash
+   cd web-interface
+   python3 -m venv venv
+   source venv/bin/activate
+   pip install -r requirements.txt
+   python app.py
+   ```
 
-- adafruit_fakerequests
-- adafruit_requests
-- adafruit_bitmap_font
-- adafruit_io
-- adafruit_matrixportal
-- adafruit_minimqtt
-- adafruit_display_text
-- adafruit_portalbase
+2. **Configure via Browser**
+   - Open http://localhost:3100
+   - Set WiFi credentials and location bounds
+   - Choose your preferred layout
 
-For power, the easiest thing is to use the cable that came with your matrix panel, as long as it has two prongs that go to the screws on the matrixportal. All that's needed is for the portal to connect to the power port on the panel - we're not using much power here (I clock it at about 2w). Any decent usb power supply connected to the portal should do it.
+3. **Deploy Device Code**
+   - Update `CONFIG_SERVER` in `code_v2.py` with your computer's IP
+   - Copy `code_v2.py` to MatrixPortal as `code.py`
 
-![IMG-2179](https://user-images.githubusercontent.com/103124527/208709167-dd4b6ff2-4c80-4e38-840f-e5b958e2ed78.jpg)
+### Option 2: Legacy Setup (v1)
 
-I soldered a connection straight onto the panel's power port as below, for neatness, but that's completely optional. 
+Use original `code.py` with manual configuration in `secrets.py`
 
-![IMG_2125](https://user-images.githubusercontent.com/103124527/206903066-7af5c076-101e-4598-b3ba-0f64766e4162.jpg)
-![IMG_2126_small](https://user-images.githubusercontent.com/103124527/206903084-42378ce0-b8d8-4810-a18a-f35b9a509752.jpg)
-![IMG_2127_small](https://user-images.githubusercontent.com/103124527/206903089-16d0f7f7-2dc0-4082-a012-0e1c9999a63a.jpg)
-![IMG_2128_small](https://user-images.githubusercontent.com/103124527/206903092-0a131b80-cd20-4c8c-b892-9b0a5c1d544b.jpg)
+## 📚 Documentation
 
-For debugging, use putty or similar, see what COM port the portal is on (device manager in windows will show you), and run a serial connection to that port at 115200. It should print out helpful messages about errors, flights it sees, etc. You can also paste the URLs you see in the code into a browser and check you can find flights, etc.
+- **[INSTALLATION.md](INSTALLATION.md)** - Complete setup instructions
+- **[web-interface/README.md](web-interface/README.md)** - Web interface documentation
+- **[TO-DO.md](TO-DO.md)** - Detailed feature checklist and roadmap
+
+## 🛠️ Hardware Requirements
+
+1. **[MatrixPortal M4](https://www.adafruit.com/product/4745)** - Adafruit's ESP32-powered LED matrix controller
+2. **64x32 RGB LED Matrix Panel (P4)** - Available from Adafruit or AliExpress
+3. **[3D Printed Case](https://www.thingiverse.com/thing:5701517)** (optional)
+4. **[Acrylic Diffuser](https://www.adafruit.com/product/4749)** (optional)
+5. **6x M3 Screws** - 8mm length recommended
+6. **USB Power Supply** - 5V, 2A minimum
+
+## 🎨 Available Layouts
+
+### Classic (Default)
+- Row 1: Flight Number → Airline Name
+- Row 2: Route Codes → Full Route Names
+- Row 3: Aircraft Code → Aircraft Model
+
+### Detailed
+- Row 1: Flight Number → Airline Name
+- Row 2: Route Codes → Route with Altitude
+- Row 3: Aircraft Code → Aircraft with Speed
+- Row 4: Altitude → Speed and Heading
+
+### Minimal
+- Row 1: Flight Number → Airline Name
+- Row 2: Route Codes → Full Route Names
+
+### Tracking
+- Row 1: Flight Number → Callsign
+- Row 2: Altitude → Altitude Detailed
+- Row 3: Speed → Speed and Heading
+
+## 📝 Available Data Fields
+
+The system can display any of these fields from the FlightRadar24 API:
+
+**Flight Info:** Flight Number, Callsign, Airline Name
+**Aircraft:** Model, Code, Registration
+**Route:** Origin/Destination Names & Codes
+**Real-time:** Altitude, Speed, Heading, Lat/Lon
+**Computed:** Route combinations, formatted values
+
+See `web-interface/config/fields.json` for complete list.
+
+## 🌐 Web Interface Features
+
+- **📊 Dashboard** - System status overview
+- **🎨 Layout Manager** - Switch between display layouts
+- **📝 Field Browser** - View all available data fields
+- **📡 WiFi Configuration** - Set network credentials
+- **📍 Location Settings** - Define geographic search area
+- **🎬 Display Settings** - Adjust animations and timing
+- **ℹ️ System Info** - Configuration and status
+
+Access at: **http://localhost:3100** or **http://flightportal:3100**
+
+## 🔧 Configuration
+
+### Via Web Interface (v2)
+
+All settings managed through the web UI:
+- WiFi credentials
+- Geographic bounds
+- Active layout selection
+- Animation speeds
+- Query intervals
+
+Configuration is automatically synced to the device every 5 minutes.
+
+### Via Code (v1 Legacy)
+
+Edit `secrets.py`:
+```python
+secrets = {
+    'ssid': 'Your-WiFi-Network',
+    'password': 'Your-Password',
+    'bounds_box': '51.6,51.4,-0.3,-0.1'  # top,bottom,left,right
+}
+```
+
+## 🔌 CircuitPython Libraries Required
+
+Install these from the [Adafruit CircuitPython Bundle](https://circuitpython.org/libraries):
+
+- `adafruit_matrixportal/`
+- `adafruit_portalbase/`
+- `adafruit_requests.mpy`
+- `adafruit_esp32spi/`
+- `adafruit_display_text/`
+- `adafruit_bitmap_font/`
+- `adafruit_io/` (v1 only)
+- `neopixel.mpy`
+
+## ⚡ Power Requirements
+
+- **Typical consumption:** ~2W
+- **Power method:** USB-C to MatrixPortal, with power pass-through to panel
+- **Supply rating:** 5V, 2A minimum recommended
+
+## 🐛 Debugging
+
+Connect via serial console at 115200 baud to see:
+- WiFi connection status
+- Configuration fetch results
+- Flight detection messages
+- Error diagnostics
+
+**Mac/Linux:** `screen /dev/tty.usbmodem* 115200`
+**Windows:** PuTTY or Tera Term on appropriate COM port
+
+## 🗺️ Setting Geographic Bounds
+
+Your bounds define the rectangular area to search for flights.
+
+**Format:** `top_latitude,bottom_latitude,left_longitude,right_longitude`
+
+**Examples:**
+- Central London: `51.6,51.4,-0.3,-0.1`
+- New York City: `40.9,40.6,-74.1,-73.8`
+- Los Angeles: `34.2,33.9,-118.5,-118.1`
+
+**How to find your coordinates:**
+1. Go to [Google Maps](https://maps.google.com)
+2. Right-click your location → "What's here?"
+3. Copy the coordinates
+4. Create a bounding box (±0.1-0.2 degrees)
+
+## 🎯 Project Structure
+
+```
+flightportal/
+├── code.py              # Original device code (v1)
+├── code_v2.py           # New device code with web config (v2)
+├── secrets.py           # WiFi credentials (legacy/backup)
+├── README.md            # This file
+├── INSTALLATION.md      # Detailed setup guide
+├── TO-DO.md             # Feature checklist
+├── LICENSE              # Non-commercial license
+└── web-interface/       # Web configuration interface
+    ├── app.py           # Flask application
+    ├── requirements.txt # Python dependencies
+    ├── README.md        # Web interface docs
+    ├── setup-hostname.sh  # Hostname setup (Linux/Mac)
+    ├── setup-hostname.bat # Hostname setup (Windows)
+    ├── config/          # Configuration files (auto-generated)
+    │   ├── device_config.json
+    │   ├── layouts.json
+    │   └── fields.json
+    ├── templates/       # HTML templates
+    │   └── index.html
+    └── static/          # Static assets
+        ├── css/
+        └── js/
+```
+
+## 🔄 Upgrading from v1 to v2
+
+1. Keep your existing `code.py` and `secrets.py` as backup
+2. Set up web interface (see [INSTALLATION.md](INSTALLATION.md))
+3. Configure WiFi and location in web interface
+4. Update `CONFIG_SERVER` IP in `code_v2.py`
+5. Copy `code_v2.py` to device as `code.py`
+6. Device will fetch config from web server on startup
+
+The v2 code is backward compatible - if the web server is unavailable, it falls back to `secrets.py` values.
+
+## 🤝 Contributing
+
+This is a personal project, but suggestions and feedback are welcome! Please note the non-commercial license terms.
+
+## ⚠️ Disclaimer
+
+This project uses unofficial FlightRadar24 API access. The API structure may change at any time, potentially breaking functionality. Use responsibly and respect API rate limits.
+
+## 📜 License
+
+This project is licensed under **Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)**.
+
+**You are free to:**
+- ✅ Use for personal, non-commercial purposes
+- ✅ Modify and build upon the code
+- ✅ Share with others
+
+**Under these conditions:**
+- 📝 Provide attribution to the original author
+- 🚫 No commercial use or resale
+- 🔄 Share derivatives under the same license
+
+See [LICENSE](LICENSE) file for full terms.
+
+## 🙏 Acknowledgments
+
+- Adafruit for the excellent MatrixPortal hardware and libraries
+- FlightRadar24 for flight data (unofficial API usage)
+- The maker community for inspiration
+
+## 📸 Gallery
+
+![Hardware Assembly](https://user-images.githubusercontent.com/103124527/208709167-dd4b6ff2-4c80-4e38-840f-e5b958e2ed78.jpg)
+
+### Wiring Details (Optional)
+
+For a cleaner installation, you can solder power directly to the matrix panel:
+
+![Wiring 1](https://user-images.githubusercontent.com/103124527/206903066-7af5c076-101e-4598-b3ba-0f64766e4162.jpg)
+![Wiring 2](https://user-images.githubusercontent.com/103124527/206903084-42378ce0-b8d8-4810-a18a-f35b9a509752.jpg)
+![Wiring 3](https://user-images.githubusercontent.com/103124527/206903089-16d0f7f7-2dc0-4082-a012-0e1c9999a63a.jpg)
+![Wiring 4](https://user-images.githubusercontent.com/103124527/206903092-0a131b80-cd20-4c8c-b892-9b0a5c1d544b.jpg)
+
+---
+
+**Made with ✈️ for aviation enthusiasts**
