@@ -231,35 +231,21 @@ This project uses unofficial FlightRadar24 API access. The API structure may cha
 
 ## 📜 License
 
-### ⚠️ IMPORTANT: License Restriction for Commercial Use
+This project is licensed under the **MIT License**.
 
-This project is currently licensed under **Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)**.
+**You are free to:**
+- ✅ Use for personal or commercial purposes
+- ✅ Modify and build upon the code
+- ✅ Distribute and sell products based on this code
+- ✅ Use in proprietary software
 
-**Current License Allows:**
-- ✅ Personal, non-commercial use
-- ✅ Modification and derivative works
-- ✅ Sharing with attribution
+**Requirements:**
+- 📝 Include the MIT License text and copyright notice in your distributions
 
-**Current License PROHIBITS:**
-- 🚫 **Selling devices or products based on this code**
-- 🚫 **Commercial use or resale**
-- 🚫 **Offering as a paid service**
+**No Warranty:**
+- The software is provided "as is" without warranty of any kind
 
-### 🏢 If You Want to Sell Devices
-
-**You MUST change the license first!** See [OTA-UPDATES.md](OTA-UPDATES.md) for recommended licenses:
-- **MIT License** - Most permissive, allows commercial use
-- **Apache 2.0** - Includes patent protection
-- **Dual License** - Open source + commercial version
-- **Proprietary** - Keep commercial version private
-
-**To change license:**
-1. Replace the [LICENSE](LICENSE) file
-2. Update README.md (this file)
-3. Add copyright headers to code files
-4. Commit changes before selling
-
-See [LICENSE](LICENSE) file for current full terms.
+Perfect for commercial products! See [LICENSE](LICENSE) file for full terms.
 
 ## 🙏 Acknowledgments
 
