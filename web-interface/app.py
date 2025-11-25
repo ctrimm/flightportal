@@ -606,6 +606,152 @@ def get_status():
     }
     return jsonify(status)
 
+# ==================== OTA Firmware Update Endpoints ====================
+
+# Firmware storage
+FIRMWARE_DIR = os.path.join(os.path.dirname(__file__), 'firmware')
+FIRMWARE_MANIFEST_PATH = os.path.join(FIRMWARE_DIR, 'manifest.json')
+
+# Ensure firmware directory exists
+os.makedirs(FIRMWARE_DIR, exist_ok=True)
+
+def get_firmware_manifest():
+    """Get firmware manifest with version info"""
+    try:
+        if os.path.exists(FIRMWARE_MANIFEST_PATH):
+            with open(FIRMWARE_MANIFEST_PATH, 'r') as f:
+                return json.load(f)
+        return {
+            "current_version": "3.0.0",
+            "versions": [
+                {
+                    "version": "3.0.0",
+                    "released": datetime.now().isoformat(),
+                    "changelog": "Initial OTA support release",
+                    "filename": "code_v3_ota.py",
+                    "mandatory": False
+                }
+            ]
+        }
+    except Exception as e:
+        print(f"Error loading firmware manifest: {e}")
+        return {"current_version": "3.0.0", "versions": []}
+
+def save_firmware_manifest(manifest):
+    """Save firmware manifest"""
+    try:
+        with open(FIRMWARE_MANIFEST_PATH, 'w') as f:
+            json.dump(manifest, f, indent=2)
+        return True
+    except Exception as e:
+        print(f"Error saving firmware manifest: {e}")
+        return False
+
+@app.route('/api/firmware/check', methods=['GET'])
+def check_firmware():
+    """Check if firmware update is available"""
+    device_version = request.args.get('version', '0.0.0')
+    manifest = get_firmware_manifest()
+    current_version = manifest.get('current_version', '3.0.0')
+
+    # Simple version comparison (semver would be better)
+    device_parts = [int(x) for x in device_version.split('.')]
+    current_parts = [int(x) for x in current_version.split('.')]
+
+    update_available = (
+        current_parts[0] > device_parts[0] or
+        (current_parts[0] == device_parts[0] and current_parts[1] > device_parts[1]) or
+        (current_parts[0] == device_parts[0] and current_parts[1] == device_parts[1] and current_parts[2] > device_parts[2])
+    )
+
+    if update_available:
+        # Find the version info
+        version_info = next((v for v in manifest.get('versions', []) if v['version'] == current_version), {})
+        return jsonify({
+            "update_available": True,
+            "version": current_version,
+            "changelog": version_info.get('changelog', 'No changelog available'),
+            "mandatory": version_info.get('mandatory', False),
+            "download_url": f"http://{request.host}/api/firmware/download"
+        })
+    else:
+        return jsonify({
+            "update_available": False,
+            "current_version": device_version
+        })
+
+@app.route('/api/firmware/download', methods=['GET'])
+def download_firmware():
+    """Download latest firmware"""
+    manifest = get_firmware_manifest()
+    current_version = manifest.get('current_version', '3.0.0')
+
+    # Find the firmware file for current version
+    version_info = next((v for v in manifest.get('versions', []) if v['version'] == current_version), {})
+    filename = version_info.get('filename', 'code_v3_ota.py')
+
+    # Try to find the file in firmware directory or root directory
+    firmware_path = os.path.join(FIRMWARE_DIR, filename)
+    if not os.path.exists(firmware_path):
+        # Try parent directory
+        firmware_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), filename)
+
+    if os.path.exists(firmware_path):
+        with open(firmware_path, 'r') as f:
+            firmware_code = f.read()
+        return firmware_code, 200, {'Content-Type': 'text/plain'}
+    else:
+        return jsonify({"error": "Firmware file not found"}), 404
+
+@app.route('/api/firmware/upload', methods=['POST'])
+def upload_firmware():
+    """Upload new firmware version"""
+    try:
+        data = request.json
+        version = data.get('version')
+        changelog = data.get('changelog', 'No changelog provided')
+        code = data.get('code')
+        mandatory = data.get('mandatory', False)
+
+        if not version or not code:
+            return jsonify({"success": False, "message": "Version and code are required"}), 400
+
+        # Save firmware file
+        filename = f"code_{version.replace('.', '_')}.py"
+        firmware_path = os.path.join(FIRMWARE_DIR, filename)
+
+        with open(firmware_path, 'w') as f:
+            f.write(code)
+
+        # Update manifest
+        manifest = get_firmware_manifest()
+        manifest['current_version'] = version
+
+        # Add version to list if not exists
+        if not any(v['version'] == version for v in manifest.get('versions', [])):
+            manifest.setdefault('versions', []).append({
+                "version": version,
+                "released": datetime.now().isoformat(),
+                "changelog": changelog,
+                "filename": filename,
+                "mandatory": mandatory
+            })
+
+        save_firmware_manifest(manifest)
+
+        return jsonify({
+            "success": True,
+            "message": f"Firmware version {version} uploaded successfully"
+        })
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+@app.route('/api/firmware/versions', methods=['GET'])
+def list_firmware_versions():
+    """List all available firmware versions"""
+    manifest = get_firmware_manifest()
+    return jsonify(manifest)
+
 if __name__ == '__main__':
     print("=" * 60)
     print("Flight Portal Web Interface")
@@ -613,5 +759,6 @@ if __name__ == '__main__':
     print(f"Starting server on http://localhost:3100")
     print(f"Also accessible at http://flightportal:3100 (if hosts file configured)")
     print(f"Config directory: {CONFIG_DIR}")
+    print(f"Firmware directory: {FIRMWARE_DIR}")
     print("=" * 60)
     app.run(host='0.0.0.0', port=3100, debug=True)

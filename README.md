@@ -5,7 +5,7 @@ Real-time flight display system for Adafruit MatrixPortal with web-based configu
 ![Flight Portal Demo](https://user-images.githubusercontent.com/103124527/206902629-1f31bd41-d8a8-415e-a35a-625efb20b3d6.MOV)
 *(video sped up - speeds and delays are fully configurable)*
 
-## 🎯 What's New in v2
+## 🎯 What's New in v3
 
 The Flight Portal has been completely restructured with powerful new features:
 
@@ -15,10 +15,11 @@ The Flight Portal has been completely restructured with powerful new features:
 - **📝 Flexible Field Mapping** - Display any combination of API fields (altitude, speed, heading, etc.)
 - **⚙️ Remote Configuration** - Device polls web server for settings updates
 - **🎬 Adjustable Timing** - Fine-tune animation speeds and delays via web UI
+- **🔄 OTA Firmware Updates** - Update device firmware wirelessly (perfect for commercial deployments)
 
 ## 📋 Quick Start
 
-### Option 1: New Setup (v2 with Web Interface)
+### Option 1: Latest with OTA Updates (v3 - Recommended for Commercial)
 
 1. **Install Web Interface**
    ```bash
@@ -34,17 +35,23 @@ The Flight Portal has been completely restructured with powerful new features:
    - Set WiFi credentials and location bounds
    - Choose your preferred layout
 
-3. **Deploy Device Code**
-   - Update `CONFIG_SERVER` in `code_v2.py` with your computer's IP
-   - Copy `code_v2.py` to MatrixPortal as `code.py`
+3. **Deploy Device Code with OTA**
+   - Update `CONFIG_SERVER` in `code_v3_ota.py` with your computer's IP
+   - Copy `code_v3_ota.py` to MatrixPortal as `code.py`
+   - Devices can now be updated wirelessly!
 
-### Option 2: Legacy Setup (v1)
+### Option 2: Standard Web Config (v2)
+
+Use `code_v2.py` for web configuration without OTA updates
+
+### Option 3: Legacy Setup (v1)
 
 Use original `code.py` with manual configuration in `secrets.py`
 
 ## 📚 Documentation
 
 - **[INSTALLATION.md](INSTALLATION.md)** - Complete setup instructions
+- **[OTA-UPDATES.md](OTA-UPDATES.md)** - OTA firmware update guide (includes licensing for commercial use)
 - **[web-interface/README.md](web-interface/README.md)** - Web interface documentation
 - **[TO-DO.md](TO-DO.md)** - Detailed feature checklist and roadmap
 
@@ -223,19 +230,35 @@ This project uses unofficial FlightRadar24 API access. The API structure may cha
 
 ## 📜 License
 
-This project is licensed under **Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)**.
+### ⚠️ IMPORTANT: License Restriction for Commercial Use
 
-**You are free to:**
-- ✅ Use for personal, non-commercial purposes
-- ✅ Modify and build upon the code
-- ✅ Share with others
+This project is currently licensed under **Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)**.
 
-**Under these conditions:**
-- 📝 Provide attribution to the original author
-- 🚫 No commercial use or resale
-- 🔄 Share derivatives under the same license
+**Current License Allows:**
+- ✅ Personal, non-commercial use
+- ✅ Modification and derivative works
+- ✅ Sharing with attribution
 
-See [LICENSE](LICENSE) file for full terms.
+**Current License PROHIBITS:**
+- 🚫 **Selling devices or products based on this code**
+- 🚫 **Commercial use or resale**
+- 🚫 **Offering as a paid service**
+
+### 🏢 If You Want to Sell Devices
+
+**You MUST change the license first!** See [OTA-UPDATES.md](OTA-UPDATES.md) for recommended licenses:
+- **MIT License** - Most permissive, allows commercial use
+- **Apache 2.0** - Includes patent protection
+- **Dual License** - Open source + commercial version
+- **Proprietary** - Keep commercial version private
+
+**To change license:**
+1. Replace the [LICENSE](LICENSE) file
+2. Update README.md (this file)
+3. Add copyright headers to code files
+4. Commit changes before selling
+
+See [LICENSE](LICENSE) file for current full terms.
 
 ## 🙏 Acknowledgments
 
