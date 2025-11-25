@@ -9,8 +9,8 @@ export function Web({ stack }: StackContext) {
     path: "../marketing-site",
     environment: {
       NEXT_PUBLIC_API_URL: api.url,
-      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY || "",
       STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY || "",
+      STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY || "",
       STRIPE_PRICE_ID: process.env.STRIPE_PRICE_ID || "",
     },
   });

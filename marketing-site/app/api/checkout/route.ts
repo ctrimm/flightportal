@@ -9,6 +9,10 @@ export async function POST(request: NextRequest) {
   try {
     const { quantity = 1 } = await request.json()
 
+    // Get base URL from request origin or environment
+    const origin = request.headers.get('origin') || request.headers.get('referer') || 'http://localhost:3000'
+    const baseUrl = new URL(origin).origin
+
     // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -19,8 +23,8 @@ export async function POST(request: NextRequest) {
         },
       ],
       mode: 'payment',
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}`,
+      success_url: `${baseUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: baseUrl,
       metadata: {
         product: 'flight_portal_device',
         quantity: quantity.toString(),

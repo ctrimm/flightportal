@@ -8,7 +8,7 @@ Your Flight Portal system now has three main components:
 
 1. **Device Firmware** (`code_v3_secure.py`) - CircuitPython code for MatrixPortal M4
 2. **SST Backend** (`sst-backend/`) - AWS serverless API for OTA updates, config management, and orders
-3. **Marketing Site** (`marketing-site/`) - Next.js website with Stripe checkout
+3. **Marketing Site** (`marketing-site/`) - Next.js website with Stripe checkout (deployed via SST)
 
 ## Prerequisites
 
@@ -31,7 +31,7 @@ npm install
 
 ### 1.2 Configure Environment Variables
 
-Create `.env` file:
+Create `.env` file in `sst-backend/`:
 
 ```bash
 # API Keys (generate secure random strings)
@@ -41,14 +41,18 @@ ADMIN_API_KEY=admin_<generate-random-64-char-string>
 # Firmware Signing (generate secure random string)
 FIRMWARE_SIGNING_KEY=<generate-random-64-char-string>
 
-# Stripe
+# Stripe (for both API and marketing site)
 STRIPE_SECRET_KEY=sk_test_your_stripe_secret_key
+STRIPE_PUBLISHABLE_KEY=pk_test_your_publishable_key
 STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret
 STRIPE_PRICE_ID=price_your_price_id
 
 # S3 Buckets (will be created by SST)
 FIRMWARE_BUCKET=flight-portal-firmware
 BACKUP_BUCKET=flight-portal-backups
+
+# Optional: Custom domain for production
+# DOMAIN=flightportal.com
 ```
 
 **Generate secure keys:**
@@ -61,7 +65,22 @@ openssl rand -hex 32
 python3 -c "import secrets; print(secrets.token_hex(32))"
 ```
 
-### 1.3 Deploy to AWS
+### 1.3 Configure Stripe Product First
+
+Before deploying, create your Stripe product:
+
+1. Go to [Stripe Dashboard > Products](https://dashboard.stripe.com/products)
+2. Click "Add Product"
+3. Set:
+   - **Name**: Flight Portal Device
+   - **Description**: Professional real-time flight tracking LED display
+   - **Pricing**: One-time payment, $149 USD
+4. Click "Save product"
+5. Copy the **Price ID** (starts with `price_`) and add it to `.env`
+
+### 1.4 Deploy to AWS
+
+This single command deploys EVERYTHING (backend API + marketing site):
 
 ```bash
 # Deploy to dev stage
@@ -72,25 +91,24 @@ npm run deploy -- --stage prod
 ```
 
 SST will create:
-- 5 DynamoDB tables
-- 2 S3 buckets
-- API Gateway with Lambda authorizers
-- 7 Lambda functions
-- CloudFront distribution (for Web stack)
+- **Backend**: 5 DynamoDB tables, 2 S3 buckets, API Gateway, 7 Lambda functions
+- **Marketing Site**: Next.js build deployed to S3 + CloudFront CDN
+- All environment variables automatically injected
 
-### 1.4 Note Your API URL
+### 1.5 Note Your URLs
 
-After deployment, SST will output your API URL:
+After deployment, SST will output:
 
 ```
 API: https://abc123.execute-api.us-east-1.amazonaws.com
+SiteUrl: https://d111111abcdef8.cloudfront.net
 ```
 
-Save this URL - you'll need it for:
-- Device configuration
-- Marketing website
+Save these URLs:
+- **API**: For device configuration
+- **SiteUrl**: Your marketing website (live and ready!)
 
-### 1.5 Set Up Stripe Webhook
+### 1.6 Set Up Stripe Webhook
 
 1. Go to [Stripe Dashboard > Webhooks](https://dashboard.stripe.com/webhooks)
 2. Click "Add endpoint"
@@ -102,43 +120,22 @@ Save this URL - you'll need it for:
 
 ---
 
-## Part 2: Deploy Marketing Website
+## Part 2: Test Marketing Site Locally (Optional)
 
-### 2.1 Install Dependencies
+If you want to test the marketing site locally before deploying:
 
 ```bash
 cd marketing-site
 npm install
-```
 
-### 2.2 Configure Stripe Product
-
-1. Go to [Stripe Dashboard > Products](https://dashboard.stripe.com/products)
-2. Click "Add Product"
-3. Set:
-   - **Name**: Flight Portal Device
-   - **Description**: Professional real-time flight tracking LED display
-   - **Pricing**: One-time payment, $149 USD
-4. Click "Save product"
-5. Copy the **Price ID** (starts with `price_`)
-
-### 2.3 Configure Environment Variables
-
-Create `.env.local` file:
-
-```bash
-# Stripe Configuration
-STRIPE_SECRET_KEY=sk_test_your_secret_key
+# Create .env.local for local testing
+cat > .env.local <<EOF
+STRIPE_SECRET_KEY=sk_test_your_test_key
 STRIPE_PUBLISHABLE_KEY=pk_test_your_publishable_key
-STRIPE_PRICE_ID=price_your_price_id
+STRIPE_PRICE_ID=price_your_test_price_id
+EOF
 
-# Base URL
-NEXT_PUBLIC_BASE_URL=http://localhost:3000
-```
-
-### 2.4 Test Locally
-
-```bash
+# Run dev server
 npm run dev
 ```
 
@@ -149,19 +146,7 @@ Test checkout with Stripe test card:
 - Expiry: Any future date
 - CVC: Any 3 digits
 
-### 2.5 Deploy to Vercel (Recommended)
-
-1. Push code to GitHub
-2. Go to [Vercel](https://vercel.com)
-3. Import your repository
-4. Add environment variables in Vercel dashboard:
-   - `STRIPE_SECRET_KEY`
-   - `STRIPE_PUBLISHABLE_KEY`
-   - `STRIPE_PRICE_ID`
-   - `NEXT_PUBLIC_BASE_URL` (your production domain)
-5. Deploy
-
-Alternative: Deploy to any Node.js hosting (AWS Amplify, Netlify, etc.)
+**Note**: The production site is already deployed via SST. This is just for local testing!
 
 ---
 
@@ -243,9 +228,9 @@ Power on your device and verify:
 
 - [ ] Purchase domain (e.g., flightportal.com)
 - [ ] Configure DNS in Route 53 or your provider
-- [ ] Add custom domain to API Gateway
-- [ ] Add custom domain to Vercel/hosting
-- [ ] Set up SSL certificates (auto with Vercel/API Gateway)
+- [ ] Add custom domain to API Gateway (in API.ts stack)
+- [ ] Add custom domain to marketing site (in Web.ts stack)
+- [ ] Set up SSL certificates (automatic with AWS Certificate Manager)
 
 ### Device Fleet Management
 
@@ -265,7 +250,8 @@ Power on your device and verify:
 - Lambda: ~$0.20 (1M requests, 128MB)
 - DynamoDB: ~$1.25 (on-demand)
 - S3: ~$0.30 (10GB storage + transfers)
-- **Total: ~$5.25/month**
+- CloudFront (marketing site): ~$1.00 (1GB transfer)
+- **Total: ~$6.25/month**
 
 ### Medium Scale (1,000 devices, monthly)
 
@@ -273,7 +259,8 @@ Power on your device and verify:
 - Lambda: ~$2.00 (10M requests)
 - DynamoDB: ~$12.50 (on-demand)
 - S3: ~$2.30 (50GB storage + transfers)
-- **Total: ~$51.80/month**
+- CloudFront: ~$8.50 (100GB transfer)
+- **Total: ~$60.30/month**
 
 ### Large Scale (10,000 devices, monthly)
 
@@ -281,9 +268,10 @@ Power on your device and verify:
 - Lambda: ~$20 (100M requests)
 - DynamoDB: ~$125 (on-demand)
 - S3: ~$23 (500GB storage + transfers)
-- **Total: ~$518/month**
+- CloudFront: ~$85 (1TB transfer)
+- **Total: ~$603/month**
 
-*Marketing website hosting on Vercel is free for small scale, ~$20/month for pro.*
+*All infrastructure hosted on AWS. No third-party hosting fees.*
 
 ---
 
@@ -339,12 +327,14 @@ bind: [configTable, layoutsTable, devicesTable, firmwareTable, ordersTable]
 
 ## Next Steps
 
-1. **Complete SST deployment** to get your API URL
-2. **Set up Stripe** product and get Price ID
-3. **Deploy marketing site** to Vercel
-4. **Configure first device** with API credentials
-5. **Test end-to-end flow**: Order → Device setup → OTA update
-6. **Plan device fulfillment** workflow for customer orders
+1. **Set up Stripe** product and get Price ID
+2. **Configure environment variables** in `sst-backend/.env`
+3. **Deploy everything with SST**: `cd sst-backend && npm run deploy`
+4. **Configure Stripe webhook** with your API URL
+5. **Test marketing site** at the CloudFront URL
+6. **Configure first device** with API credentials
+7. **Test end-to-end flow**: Order → Device setup → OTA update → Firmware update
+8. **Plan device fulfillment** workflow for customer orders
 
 ---
 
@@ -367,24 +357,31 @@ bind: [configTable, layoutsTable, devicesTable, firmwareTable, ordersTable]
 └────────┬────────┘
          │
          ▼
-┌─────────────────┐         ┌──────────────┐
-│   Marketing     │────────▶│   Stripe     │
-│   Website       │         │   Checkout   │
-│   (Next.js)     │         └──────────────┘
-└─────────────────┘
+┌──────────────────────────────────────────┐
+│         CloudFront CDN                    │
+│    (Marketing Site - Next.js on S3)      │
+└────────┬──────────────┬──────────────────┘
+         │              │
+         │              └──────────────────┐
+         ▼                                 │
+┌─────────────────┐                        │
+│   Stripe        │                        │
+│   Checkout      │                        │
+└─────────────────┘                        │
+         │                                 │
+         │ (webhook)                       │
+         ▼                                 ▼
+┌─────────────────────────────────────────────┐
+│         AWS API Gateway                      │
+│         (Lambda Authorizer)                  │
+└────────┬────────────────────────────────────┘
          │
          ▼
-┌─────────────────────────────────────────┐
-│         AWS API Gateway                  │
-│         (Lambda Authorizer)              │
-└────────┬────────────────────────────────┘
-         │
-         ▼
-┌─────────────────────────────────────────┐
-│         Lambda Functions                 │
-│  • Config • Layouts • Firmware           │
-│  • Orders • Stripe Webhooks              │
-└────┬──────────┬──────────┬──────────────┘
+┌─────────────────────────────────────────────┐
+│         Lambda Functions                     │
+│  • Config • Layouts • Firmware               │
+│  • Orders • Stripe Webhooks • Fields         │
+└────┬──────────┬──────────┬─────────────────┘
      │          │          │
      ▼          ▼          ▼
 ┌─────────┐ ┌────────┐ ┌────────┐
@@ -399,7 +396,10 @@ bind: [configTable, layoutsTable, devicesTable, firmwareTable, ordersTable]
                     │  Flight    │
                     │  Portal    │
                     │  Device    │
+                    │ (MatrixM4) │
                     └────────────┘
+
+All deployed via SST to AWS
 ```
 
 ---

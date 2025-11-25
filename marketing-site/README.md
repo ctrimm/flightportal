@@ -9,6 +9,7 @@ Professional marketing website for Flight Portal - a real-time flight tracking L
 - **Responsive**: Mobile-first design that works on all devices
 - **Performance**: Built with Next.js 14 and optimized for speed
 - **SEO Ready**: Metadata and semantic HTML for search engines
+- **AWS Deployment**: Deployed via SST to S3 + CloudFront
 
 ## Tech Stack
 
@@ -18,8 +19,29 @@ Professional marketing website for Flight Portal - a real-time flight tracking L
 - **Icons**: Lucide React
 - **Payments**: Stripe
 - **Language**: TypeScript
+- **Deployment**: SST (Serverless Stack) to AWS
 
-## Setup
+## Deployment
+
+This site is deployed as part of the SST backend stack. See `../sst-backend/` for deployment.
+
+### SST Deployment (Recommended)
+
+The marketing site is automatically deployed when you deploy the SST backend:
+
+```bash
+cd ../sst-backend
+npm install
+npm run deploy
+```
+
+SST will:
+- Build the Next.js site
+- Deploy to S3 + CloudFront
+- Inject environment variables
+- Output the site URL
+
+### Local Development
 
 1. **Install Dependencies**:
    ```bash
@@ -27,14 +49,13 @@ Professional marketing website for Flight Portal - a real-time flight tracking L
    ```
 
 2. **Configure Environment Variables**:
-   ```bash
-   cp .env.example .env
-   ```
 
-   Edit `.env` and add your Stripe keys:
-   - Get your Stripe keys from https://dashboard.stripe.com/apikeys
-   - Create a product in Stripe Dashboard for $149
-   - Copy the Price ID to `STRIPE_PRICE_ID`
+   For local testing, create `.env.local`:
+   ```bash
+   STRIPE_SECRET_KEY=sk_test_your_test_key
+   STRIPE_PUBLISHABLE_KEY=pk_test_your_test_key
+   STRIPE_PRICE_ID=price_your_test_price_id
+   ```
 
 3. **Run Development Server**:
    ```bash
@@ -66,27 +87,24 @@ During development, use test mode:
 ### Production Mode
 
 Before going live:
-1. Switch to live API keys in `.env`
-2. Update `NEXT_PUBLIC_BASE_URL` to your production domain
-3. Configure Stripe webhook for production (optional)
-4. Test checkout flow thoroughly
+1. Set live Stripe keys in `../sst-backend/.env`
+2. Configure custom domain in SST (optional)
+3. Configure Stripe webhook for production
+4. Deploy with `npm run deploy -- --stage prod`
+5. Test checkout flow thoroughly
 
-## Deployment
+## Environment Variables
 
-### Deploy to Vercel
+All environment variables are managed in the SST backend (`../sst-backend/.env`):
 
-1. Push code to GitHub
-2. Import to [Vercel](https://vercel.com)
-3. Add environment variables in Vercel dashboard
-4. Deploy
+```bash
+# In sst-backend/.env
+STRIPE_SECRET_KEY=sk_live_your_live_secret_key
+STRIPE_PUBLISHABLE_KEY=pk_live_your_publishable_key
+STRIPE_PRICE_ID=price_your_live_price_id
+```
 
-### Environment Variables in Production
-
-Set these in your hosting platform:
-- `STRIPE_SECRET_KEY` - Live secret key
-- `STRIPE_PUBLISHABLE_KEY` - Live publishable key (if needed client-side)
-- `STRIPE_PRICE_ID` - Live price ID
-- `NEXT_PUBLIC_BASE_URL` - Your production domain
+SST automatically injects these into the Next.js site during deployment.
 
 ## Customization
 
