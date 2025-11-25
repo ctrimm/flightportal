@@ -52,6 +52,7 @@ Use original `code.py` with manual configuration in `secrets.py`
 
 - **[INSTALLATION.md](INSTALLATION.md)** - Complete setup instructions
 - **[OTA-UPDATES.md](OTA-UPDATES.md)** - OTA firmware update guide (includes licensing for commercial use)
+- **[SECURITY.md](SECURITY.md)** - 🔐 Security implementation guide (authentication, HTTPS, code signing)
 - **[web-interface/README.md](web-interface/README.md)** - Web interface documentation
 - **[TO-DO.md](TO-DO.md)** - Detailed feature checklist and roadmap
 

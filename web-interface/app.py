@@ -1,12 +1,16 @@
 """
 Flight Portal Web Interface
 A CRUD interface for managing MatrixPortal flight display settings
+WITH SECURITY: Authentication, HTTPS, and Code Signing
 """
 
 from flask import Flask, render_template, jsonify, request, send_from_directory
 from flask_cors import CORS
+from functools import wraps
 import json
 import os
+import hmac
+import hashlib
 from datetime import datetime
 
 app = Flask(__name__)
@@ -17,9 +21,90 @@ CONFIG_DIR = os.path.join(os.path.dirname(__file__), 'config')
 DEVICE_CONFIG_PATH = os.path.join(CONFIG_DIR, 'device_config.json')
 LAYOUTS_CONFIG_PATH = os.path.join(CONFIG_DIR, 'layouts.json')
 FIELDS_CONFIG_PATH = os.path.join(CONFIG_DIR, 'fields.json')
+SECRETS_PATH = os.path.join(os.path.dirname(__file__), '.secrets.json')
 
 # Ensure config directory exists
 os.makedirs(CONFIG_DIR, exist_ok=True)
+
+# ==================== Security Configuration ====================
+
+def load_security_config():
+    """Load security configuration (API keys, signing keys, SSL settings)"""
+    if os.path.exists(SECRETS_PATH):
+        try:
+            with open(SECRETS_PATH, 'r') as f:
+                return json.load(f)
+        except Exception as e:
+            print(f"⚠️  Error loading security config: {e}")
+
+    # Default config (INSECURE - only for development)
+    print("⚠️  WARNING: No .secrets.json found! Using default insecure keys.")
+    print("⚠️  Run 'python generate_keys.py' to generate secure keys.")
+    return {
+        "admin_api_key": "INSECURE_DEFAULT_ADMIN_KEY",
+        "device_api_key": "INSECURE_DEFAULT_DEVICE_KEY",
+        "signing_key": "INSECURE_DEFAULT_SIGNING_KEY",
+        "ssl_enabled": False,
+        "ssl_cert": None,
+        "ssl_key": None
+    }
+
+SECURITY_CONFIG = load_security_config()
+
+def sign_firmware(firmware_code):
+    """Sign firmware code with HMAC-SHA256"""
+    signing_key = SECURITY_CONFIG['signing_key']
+    signature = hmac.new(
+        signing_key.encode('utf-8'),
+        firmware_code.encode('utf-8'),
+        hashlib.sha256
+    ).hexdigest()
+    return signature
+
+def verify_signature(firmware_code, signature):
+    """Verify firmware signature"""
+    expected_signature = sign_firmware(firmware_code)
+    return hmac.compare_digest(signature, expected_signature)
+
+def require_auth(required_role='device'):
+    """Decorator for requiring authentication"""
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            # Get authorization header
+            auth_header = request.headers.get('Authorization', '')
+
+            # Extract bearer token
+            if not auth_header.startswith('Bearer '):
+                return jsonify({"error": "Missing or invalid authorization header"}), 401
+
+            token = auth_header.replace('Bearer ', '').strip()
+
+            # Validate token based on role
+            if required_role == 'admin':
+                valid_token = SECURITY_CONFIG['admin_api_key']
+            elif required_role == 'device':
+                # Device endpoints accept either device or admin key
+                valid_token = SECURITY_CONFIG['device_api_key']
+                admin_token = SECURITY_CONFIG['admin_api_key']
+                if token == admin_token or token == valid_token:
+                    return f(*args, **kwargs)
+                return jsonify({"error": "Invalid API key"}), 401
+            else:
+                return jsonify({"error": "Invalid role"}), 500
+
+            # Constant-time comparison to prevent timing attacks
+            if not hmac.compare_digest(token, valid_token):
+                return jsonify({"error": "Invalid API key"}), 401
+
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
+
+# Public endpoints (no auth required)
+PUBLIC_ENDPOINTS = ['/', '/static']
+
+# ==================== Configuration Paths ====================
 
 # ==================== Helper Functions ====================
 
@@ -390,12 +475,14 @@ def send_static(path):
 
 # Device Configuration Endpoints
 @app.route('/api/config', methods=['GET'])
+@require_auth('device')
 def get_config():
     """Get complete device configuration"""
     config = load_json(DEVICE_CONFIG_PATH, get_default_device_config())
     return jsonify(config)
 
 @app.route('/api/config', methods=['PUT'])
+@require_auth('admin')
 def update_config():
     """Update complete device configuration"""
     try:
@@ -409,12 +496,14 @@ def update_config():
 
 # WiFi Settings
 @app.route('/api/config/wifi', methods=['GET'])
+@require_auth('device')
 def get_wifi():
     """Get WiFi settings"""
     config = load_json(DEVICE_CONFIG_PATH, get_default_device_config())
     return jsonify(config.get('wifi', {}))
 
 @app.route('/api/config/wifi', methods=['PUT'])
+@require_auth('admin')
 def update_wifi():
     """Update WiFi settings"""
     try:
@@ -429,12 +518,14 @@ def update_wifi():
 
 # Location/Bounds Settings
 @app.route('/api/config/bounds', methods=['GET'])
+@require_auth('device')
 def get_bounds():
     """Get geographic bounds"""
     config = load_json(DEVICE_CONFIG_PATH, get_default_device_config())
     return jsonify(config.get('location', {}))
 
 @app.route('/api/config/bounds', methods=['PUT'])
+@require_auth('admin')
 def update_bounds():
     """Update geographic bounds"""
     try:
@@ -449,12 +540,14 @@ def update_bounds():
 
 # Layout Management
 @app.route('/api/layouts', methods=['GET'])
+@require_auth('device')
 def get_layouts():
     """Get all layouts"""
     layouts = load_json(LAYOUTS_CONFIG_PATH, get_default_layouts())
     return jsonify(layouts)
 
 @app.route('/api/layouts/<layout_id>', methods=['GET'])
+@require_auth('device')
 def get_layout(layout_id):
     """Get specific layout by ID"""
     layouts = load_json(LAYOUTS_CONFIG_PATH, get_default_layouts())
@@ -464,6 +557,7 @@ def get_layout(layout_id):
     return jsonify({"error": "Layout not found"}), 404
 
 @app.route('/api/layouts', methods=['POST'])
+@require_auth('admin')
 def create_layout():
     """Create new layout"""
     try:
@@ -487,6 +581,7 @@ def create_layout():
         return jsonify({"success": False, "message": str(e)}), 400
 
 @app.route('/api/layouts/<layout_id>', methods=['PUT'])
+@require_auth('admin')
 def update_layout(layout_id):
     """Update existing layout"""
     try:
@@ -505,6 +600,7 @@ def update_layout(layout_id):
         return jsonify({"success": False, "message": str(e)}), 400
 
 @app.route('/api/layouts/<layout_id>', methods=['DELETE'])
+@require_auth('admin')
 def delete_layout(layout_id):
     """Delete layout"""
     try:
@@ -522,6 +618,7 @@ def delete_layout(layout_id):
         return jsonify({"success": False, "message": str(e)}), 400
 
 @app.route('/api/config/active-layout', methods=['PUT'])
+@require_auth('admin')
 def set_active_layout():
     """Set active layout"""
     try:
@@ -537,6 +634,7 @@ def set_active_layout():
 
 # Field Management
 @app.route('/api/fields/available', methods=['GET'])
+@require_auth('device')
 def get_available_fields():
     """Get all available API fields"""
     fields = load_json(FIELDS_CONFIG_PATH, get_default_fields())
@@ -544,6 +642,7 @@ def get_available_fields():
 
 # Display Settings
 @app.route('/api/display/colors', methods=['GET'])
+@require_auth('device')
 def get_colors():
     """Get color settings"""
     config = load_json(DEVICE_CONFIG_PATH, get_default_device_config())
@@ -562,6 +661,7 @@ def get_colors():
     return jsonify({"plane_color": "0x4B0082", "rows": []})
 
 @app.route('/api/display/timing', methods=['GET'])
+@require_auth('device')
 def get_timing():
     """Get timing settings"""
     config = load_json(DEVICE_CONFIG_PATH, get_default_device_config())
@@ -571,6 +671,7 @@ def get_timing():
     })
 
 @app.route('/api/display/timing', methods=['PUT'])
+@require_auth('admin')
 def update_timing():
     """Update timing settings"""
     try:
@@ -591,6 +692,7 @@ def update_timing():
 
 # System Status
 @app.route('/api/status', methods=['GET'])
+@require_auth('device')
 def get_status():
     """Get system status"""
     config = load_json(DEVICE_CONFIG_PATH, get_default_device_config())
@@ -648,6 +750,7 @@ def save_firmware_manifest(manifest):
         return False
 
 @app.route('/api/firmware/check', methods=['GET'])
+@require_auth('device')
 def check_firmware():
     """Check if firmware update is available"""
     device_version = request.args.get('version', '0.0.0')
@@ -667,12 +770,13 @@ def check_firmware():
     if update_available:
         # Find the version info
         version_info = next((v for v in manifest.get('versions', []) if v['version'] == current_version), {})
+        protocol = 'https' if SECURITY_CONFIG['ssl_enabled'] else 'http'
         return jsonify({
             "update_available": True,
             "version": current_version,
             "changelog": version_info.get('changelog', 'No changelog available'),
             "mandatory": version_info.get('mandatory', False),
-            "download_url": f"http://{request.host}/api/firmware/download"
+            "download_url": f"{protocol}://{request.host}/api/firmware/download"
         })
     else:
         return jsonify({
@@ -681,8 +785,9 @@ def check_firmware():
         })
 
 @app.route('/api/firmware/download', methods=['GET'])
+@require_auth('device')
 def download_firmware():
-    """Download latest firmware"""
+    """Download latest firmware with code signature"""
     manifest = get_firmware_manifest()
     current_version = manifest.get('current_version', '3.0.0')
 
@@ -699,11 +804,21 @@ def download_firmware():
     if os.path.exists(firmware_path):
         with open(firmware_path, 'r') as f:
             firmware_code = f.read()
-        return firmware_code, 200, {'Content-Type': 'text/plain'}
+
+        # Sign the firmware
+        signature = sign_firmware(firmware_code)
+
+        # Return firmware with signature in header
+        response = app.make_response((firmware_code, 200))
+        response.headers['Content-Type'] = 'text/plain'
+        response.headers['X-Firmware-Signature'] = signature
+        response.headers['X-Firmware-Version'] = current_version
+        return response
     else:
         return jsonify({"error": "Firmware file not found"}), 404
 
 @app.route('/api/firmware/upload', methods=['POST'])
+@require_auth('admin')
 def upload_firmware():
     """Upload new firmware version"""
     try:
@@ -747,18 +862,50 @@ def upload_firmware():
         return jsonify({"success": False, "message": str(e)}), 500
 
 @app.route('/api/firmware/versions', methods=['GET'])
+@require_auth('device')
 def list_firmware_versions():
     """List all available firmware versions"""
     manifest = get_firmware_manifest()
     return jsonify(manifest)
 
 if __name__ == '__main__':
-    print("=" * 60)
-    print("Flight Portal Web Interface")
-    print("=" * 60)
-    print(f"Starting server on http://localhost:3100")
-    print(f"Also accessible at http://flightportal:3100 (if hosts file configured)")
+    print("=" * 80)
+    print("Flight Portal Web Interface - SECURE MODE")
+    print("=" * 80)
+    print()
+
+    # Security status
+    if SECURITY_CONFIG['admin_api_key'] == "INSECURE_DEFAULT_ADMIN_KEY":
+        print("⚠️  WARNING: Using default insecure keys!")
+        print("⚠️  Run 'python generate_keys.py' to generate secure keys")
+        print()
+    else:
+        print("✅ Security keys loaded from .secrets.json")
+
+    # SSL status
+    protocol = "https" if SECURITY_CONFIG['ssl_enabled'] else "http"
+    if SECURITY_CONFIG['ssl_enabled']:
+        print("✅ HTTPS enabled")
+        ssl_context = (
+            SECURITY_CONFIG['ssl_cert'],
+            SECURITY_CONFIG['ssl_key']
+        )
+    else:
+        print("⚠️  HTTPS disabled - using HTTP")
+        print("   Run 'python generate_keys.py' to generate SSL certificates")
+        ssl_context = None
+
+    print()
+    print(f"Server URL: {protocol}://localhost:3100")
+    print(f"Also accessible at: {protocol}://flightportal:3100 (if hosts file configured)")
+    print()
     print(f"Config directory: {CONFIG_DIR}")
     print(f"Firmware directory: {FIRMWARE_DIR}")
-    print("=" * 60)
-    app.run(host='0.0.0.0', port=3100, debug=True)
+    print()
+    print("=" * 80)
+    print()
+
+    if ssl_context:
+        app.run(host='0.0.0.0', port=3100, debug=True, ssl_context=ssl_context)
+    else:
+        app.run(host='0.0.0.0', port=3100, debug=True)
