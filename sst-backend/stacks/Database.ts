@@ -55,11 +55,25 @@ export function Database({ stack }: StackContext) {
     },
   });
 
+  // Watchlist table (tail number tracking)
+  const watchlistTable = new Table(stack, "watchlist", {
+    fields: {
+      deviceId: "string",
+      tailNumber: "string",
+      added: "number",
+    },
+    primaryIndex: { partitionKey: "deviceId", sortKey: "tailNumber" },
+    globalIndexes: {
+      tailNumberIndex: { partitionKey: "tailNumber", sortKey: "deviceId" },
+    },
+  });
+
   return {
     configTable,
     layoutsTable,
     devicesTable,
     firmwareTable,
     ordersTable,
+    watchlistTable,
   };
 }

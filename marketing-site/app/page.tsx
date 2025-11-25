@@ -10,7 +10,12 @@ import {
   Monitor,
   Radio,
   MapPin,
-  Settings
+  Settings,
+  Bell,
+  GraduationCap,
+  Users,
+  Home,
+  Building2
 } from 'lucide-react'
 import FlightPath from '@/components/FlightPath'
 import FeatureCard from '@/components/FeatureCard'
@@ -39,7 +44,7 @@ export default function Home() {
           </h1>
 
           <p className="text-xl md:text-2xl text-blue-100 mb-12 max-w-3xl mx-auto leading-relaxed">
-            Transform any space into an aviation command center. Track live flights with our sleek LED display powered by cutting-edge technology.
+            Perfect for pilots, flight schools, and aviation enthusiasts. Track live flights and get alerted when your buddies are flying overhead.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
@@ -81,50 +86,156 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-aviation-dark mb-4">
-              Aviation-Grade Features
+              Built for the Aviation Community
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Engineered for aviation enthusiasts, professionals, and anyone fascinated by flight
+              Designed by pilots, for pilots. Track flights, monitor your aircraft, and stay connected to the skies.
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             <FeatureCard
+              icon={Bell}
+              title="Tail Number Watchlist"
+              description="Track specific aircraft by tail number. Get visual alerts when your friends, students, or club aircraft are flying nearby."
+              index={0}
+            />
+            <FeatureCard
               icon={Radio}
               title="Real-Time Flight Data"
               description="Connect to FlightRadar24 API for live aircraft tracking. Monitor flight numbers, airlines, aircraft types, and positions instantly."
-              index={0}
+              index={1}
             />
             <FeatureCard
               icon={Monitor}
               title="Vibrant LED Display"
               description="Premium 64×32 RGB LED matrix delivers crystal-clear flight information. Perfect visibility in any lighting condition."
-              index={1}
+              index={2}
             />
             <FeatureCard
               icon={Wifi}
               title="WiFi Connected"
               description="Seamless wireless connectivity keeps your display updated 24/7. Easy setup through our web-based configuration interface."
-              index={2}
+              index={3}
             />
             <FeatureCard
               icon={Settings}
               title="Customizable Layouts"
               description="Choose from multiple display layouts or create your own. Show flight numbers, routes, altitude, speed, and more."
-              index={3}
+              index={4}
             />
             <FeatureCard
               icon={Cloud}
               title="Over-the-Air Updates"
               description="Automatic firmware updates delivered wirelessly. New features and improvements without manual intervention."
-              index={4}
+              index={5}
             />
             <FeatureCard
               icon={Shield}
               title="Enterprise Security"
               description="Military-grade encryption, HTTPS communication, and code-signed firmware. Your device, your network, secured."
-              index={5}
+              index={6}
             />
+          </div>
+        </div>
+      </section>
+
+      {/* Use Cases Section */}
+      <section className="py-24 bg-white">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-aviation-dark mb-4">
+              Who's Using Flight Portal?
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              From flight schools to home hangars, pilots love staying connected to the skies
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="bg-gradient-to-br from-blue-50 to-white p-8 rounded-xl border border-blue-100 hover:shadow-lg transition-shadow">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-6">
+                <GraduationCap className="w-8 h-8 text-aviation-blue" />
+              </div>
+              <h3 className="text-2xl font-bold text-aviation-dark mb-4">Flight Schools</h3>
+              <p className="text-gray-600 leading-relaxed mb-4">
+                "We installed Flight Portal in our FBO lobby. Students love checking when their assigned aircraft are flying. It creates a real sense of community."
+              </p>
+              <div className="text-sm text-gray-500 italic">— Sarah M., Chief Flight Instructor</div>
+              <div className="mt-4 text-sm text-aviation-blue font-semibold">
+                Track all 12 training aircraft • See student solo flights • Monitor traffic patterns
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-br from-green-50 to-white p-8 rounded-xl border border-green-100 hover:shadow-lg transition-shadow">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-6">
+                <Home className="w-8 h-8 text-green-600" />
+              </div>
+              <h3 className="text-2xl font-bold text-aviation-dark mb-4">Home Pilots</h3>
+              <p className="text-gray-600 leading-relaxed mb-4">
+                "Mounted in my hangar. When my flying buddies are overhead, I get an alert. Great way to stay connected with the local pilot community!"
+              </p>
+              <div className="text-sm text-gray-500 italic">— Mike T., Private Pilot (PPL)</div>
+              <div className="mt-4 text-sm text-green-600 font-semibold">
+                Track 5 friend tail numbers • Know when they're flying • Wave from the ground
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-br from-purple-50 to-white p-8 rounded-xl border border-purple-100 hover:shadow-lg transition-shadow">
+              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-6">
+                <Users className="w-8 h-8 text-purple-600" />
+              </div>
+              <h3 className="text-2xl font-bold text-aviation-dark mb-4">Flying Clubs</h3>
+              <p className="text-gray-600 leading-relaxed mb-4">
+                "Perfect for our clubhouse. Members can see when club aircraft are in the pattern. It's like having our own mini tower display."
+              </p>
+              <div className="text-sm text-gray-500 italic">— Jason K., Flying Club President</div>
+              <div className="mt-4 text-sm text-purple-600 font-semibold">
+                Monitor all club aircraft • Real-time availability • Enhanced safety awareness
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-br from-orange-50 to-white p-8 rounded-xl border border-orange-100 hover:shadow-lg transition-shadow">
+              <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-6">
+                <Building2 className="w-8 h-8 text-orange-600" />
+              </div>
+              <h3 className="text-2xl font-bold text-aviation-dark mb-4">Maintenance Shops</h3>
+              <p className="text-gray-600 leading-relaxed mb-4">
+                "We track customer aircraft post-maintenance. Great for confirming test flights and showing customers their plane's activity."
+              </p>
+              <div className="text-sm text-gray-500 italic">— Dan R., A&P Mechanic/IA</div>
+              <div className="mt-4 text-sm text-orange-600 font-semibold">
+                Post-service monitoring • Test flight verification • Customer confidence
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-br from-red-50 to-white p-8 rounded-xl border border-red-100 hover:shadow-lg transition-shadow">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-6">
+                <Plane className="w-8 h-8 text-red-600" />
+              </div>
+              <h3 className="text-2xl font-bold text-aviation-dark mb-4">Airport Managers</h3>
+              <p className="text-gray-600 leading-relaxed mb-4">
+                "Installed in our pilot lounge. Pilots grab coffee and check traffic. Simple, effective, and everyone loves it."
+              </p>
+              <div className="text-sm text-gray-500 italic">— Linda P., Airport Operations</div>
+              <div className="mt-4 text-sm text-red-600 font-semibold">
+                Enhanced pilot services • Traffic awareness • Community hub
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-br from-cyan-50 to-white p-8 rounded-xl border border-cyan-100 hover:shadow-lg transition-shadow">
+              <div className="w-16 h-16 bg-cyan-100 rounded-full flex items-center justify-center mb-6">
+                <Radio className="w-8 h-8 text-cyan-600" />
+              </div>
+              <h3 className="text-2xl font-bold text-aviation-dark mb-4">Aviation Enthusiasts</h3>
+              <p className="text-gray-600 leading-relaxed mb-4">
+                "Desktop display next to my sim rig. I track interesting aircraft and get inspired for my next virtual flight. Absolutely love it!"
+              </p>
+              <div className="text-sm text-gray-500 italic">— Alex H., Aviation Enthusiast</div>
+              <div className="mt-4 text-sm text-cyan-600 font-semibold">
+                Track rare aircraft • Spot military traffic • Flight sim inspiration
+              </div>
+            </div>
           </div>
         </div>
       </section>

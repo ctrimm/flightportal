@@ -3,7 +3,7 @@ import { Database } from "./Database";
 import { Storage } from "./Storage";
 
 export function API({ stack }: StackContext) {
-  const { configTable, layoutsTable, devicesTable, firmwareTable, ordersTable } = use(Database);
+  const { configTable, layoutsTable, devicesTable, firmwareTable, ordersTable, watchlistTable } = use(Database);
   const { firmwareBucket, backupBucket } = use(Storage);
 
   // API with custom authorizer for device authentication
@@ -16,6 +16,7 @@ export function API({ stack }: StackContext) {
           devicesTable,
           firmwareTable,
           ordersTable,
+          watchlistTable,
           firmwareBucket,
           backupBucket,
         ],
@@ -66,6 +67,10 @@ export function API({ stack }: StackContext) {
         function: "functions/fields.list",
         authorizer: "device",
       },
+      "GET /api/watchlist": {
+        function: "functions/watchlist.list",
+        authorizer: "device",
+      },
 
       // Admin endpoints (authenticated as admin)
       "PUT /api/config": {
@@ -86,6 +91,14 @@ export function API({ stack }: StackContext) {
       },
       "POST /api/firmware/upload": {
         function: "functions/firmware.upload",
+        authorizer: "admin",
+      },
+      "POST /api/watchlist": {
+        function: "functions/watchlist.add",
+        authorizer: "admin",
+      },
+      "DELETE /api/watchlist/{tailNumber}": {
+        function: "functions/watchlist.remove",
         authorizer: "admin",
       },
 

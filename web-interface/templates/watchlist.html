@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Watchlist - Flight Portal</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        h1 {
+            color: #667eea;
+            font-size: 2.2em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #555;
+        }
+
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+            padding: 8px 16px;
+            font-size: 0.9em;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .watchlist-items {
+            margin-top: 20px;
+        }
+
+        .watchlist-item {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+        }
+
+        .watchlist-item:hover {
+            border-color: #667eea;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .item-info {
+            flex: 1;
+        }
+
+        .item-tail {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 4px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .item-nickname {
+            color: #555;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .item-notes {
+            color: #888;
+            font-size: 0.9em;
+        }
+
+        .item-date {
+            color: #aaa;
+            font-size: 0.85em;
+            margin-top: 4px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .helper-text {
+            font-size: 0.9em;
+            color: #888;
+            margin-top: 4px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+            font-size: 1.1em;
+        }
+
+        .count-badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .watchlist-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>✈️ Aircraft Watchlist</h1>
+            <p class="subtitle">Track specific tail numbers and get alerted when they're in your area</p>
+        </header>
+
+        <div class="card">
+            <h2>Add Aircraft to Watchlist</h2>
+            <div id="alertContainer"></div>
+
+            <form id="addWatchlistForm">
+                <div class="form-group">
+                    <label for="tailNumber">Tail Number *</label>
+                    <input
+                        type="text"
+                        id="tailNumber"
+                        name="tailNumber"
+                        placeholder="e.g., N12345, G-ABCD"
+                        required
+                        pattern="[A-Za-z0-9\-]+"
+                        maxlength="10"
+                    >
+                    <div class="helper-text">Enter the aircraft registration number (letters and numbers only)</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="nickname">Nickname (Optional)</label>
+                    <input
+                        type="text"
+                        id="nickname"
+                        name="nickname"
+                        placeholder="e.g., John's Cessna"
+                        maxlength="50"
+                    >
+                    <div class="helper-text">Give this aircraft a friendly name</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="notes">Notes (Optional)</label>
+                    <textarea
+                        id="notes"
+                        name="notes"
+                        placeholder="e.g., Flight school aircraft, N-number changed from..."
+                        maxlength="200"
+                    ></textarea>
+                    <div class="helper-text">Add any notes about this aircraft</div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">
+                    <span>➕</span>
+                    Add to Watchlist
+                </button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>
+                Your Watchlist
+                <span class="count-badge" id="watchlistCount">0</span>
+            </h2>
+
+            <div id="watchlistContainer" class="loading">
+                Loading watchlist...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+        const API_KEY = localStorage.getItem('apiKey') || 'your-admin-api-key-here';
+        const DEVICE_ID = 'default';  // Or get from localStorage
+
+        // Load watchlist on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadWatchlist();
+        });
+
+        // Add aircraft form submission
+        document.getElementById('addWatchlistForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = {
+                deviceId: DEVICE_ID,
+                tailNumber: document.getElementById('tailNumber').value.trim(),
+                nickname: document.getElementById('nickname').value.trim(),
+                notes: document.getElementById('notes').value.trim()
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/api/watchlist`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${API_KEY}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showAlert('success', `✓ Added ${data.tailNumber} to watchlist`);
+                    document.getElementById('addWatchlistForm').reset();
+                    loadWatchlist();
+                } else {
+                    showAlert('error', `Error: ${data.error || 'Failed to add aircraft'}`);
+                }
+            } catch (error) {
+                showAlert('error', `Error: ${error.message}`);
+            }
+        });
+
+        // Load watchlist from API
+        async function loadWatchlist() {
+            const container = document.getElementById('watchlistContainer');
+
+            try {
+                const response = await fetch(`${API_BASE}/api/watchlist?deviceId=${DEVICE_ID}`, {
+                    headers: {
+                        'Authorization': `Bearer ${API_KEY}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayWatchlist(data.watchlist);
+                    document.getElementById('watchlistCount').textContent = data.count;
+                } else {
+                    container.innerHTML = `<div class="alert alert-error">Failed to load watchlist</div>`;
+                }
+            } catch (error) {
+                container.innerHTML = `<div class="alert alert-error">Error: ${error.message}</div>`;
+            }
+        }
+
+        // Display watchlist items
+        function displayWatchlist(items) {
+            const container = document.getElementById('watchlistContainer');
+
+            if (!items || items.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
+                        </svg>
+                        <h3>No aircraft in watchlist</h3>
+                        <p>Add tail numbers above to start tracking specific aircraft</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const itemsHTML = items.map(item => {
+                const date = new Date(item.added * 1000).toLocaleDateString();
+                return `
+                    <div class="watchlist-item">
+                        <div class="item-info">
+                            <div class="item-tail">${escapeHtml(item.tailNumber)}</div>
+                            ${item.nickname ? `<div class="item-nickname">${escapeHtml(item.nickname)}</div>` : ''}
+                            ${item.notes ? `<div class="item-notes">${escapeHtml(item.notes)}</div>` : ''}
+                            <div class="item-date">Added: ${date}</div>
+                        </div>
+                        <button
+                            class="btn btn-danger"
+                            onclick="removeAircraft('${escapeHtml(item.tailNumber)}')"
+                        >
+                            🗑️ Remove
+                        </button>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = `<div class="watchlist-items">${itemsHTML}</div>`;
+        }
+
+        // Remove aircraft from watchlist
+        async function removeAircraft(tailNumber) {
+            if (!confirm(`Remove ${tailNumber} from watchlist?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/api/watchlist/${encodeURIComponent(tailNumber)}?deviceId=${DEVICE_ID}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${API_KEY}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showAlert('success', `✓ Removed ${tailNumber} from watchlist`);
+                    loadWatchlist();
+                } else {
+                    showAlert('error', `Error: ${data.error || 'Failed to remove aircraft'}`);
+                }
+            } catch (error) {
+                showAlert('error', `Error: ${error.message}`);
+            }
+        }
+
+        // Show alert message
+        function showAlert(type, message) {
+            const container = document.getElementById('alertContainer');
+            const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
+
+            container.innerHTML = `<div class="alert ${alertClass}">${message}</div>`;
+
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 5000);
+        }
+
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
