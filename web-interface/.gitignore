@@ -1,0 +1,35 @@
+# Security files - DO NOT COMMIT
+.secrets.json
+ssl_cert.pem
+ssl_key.pem
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# Flask
+instance/
+.webassets-cache
+
+# Configuration (may contain sensitive data)
+config/device_config.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
